@@ -1,0 +1,41 @@
+service: bootcamp
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: ${opt:stage, 'dev'}
+  region: eu-west-1
+  tracing: true #enable x-ray
+  environment:
+    SERVICE: ${self:service}
+    STAGE: ${self:provider.stage}
+    AWS_XRAY_CONTEXT_MISSING: LOG_ERROR
+  apiKeys:
+    - name: ${self:service}-${self:provider.stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - xray:PutTraceSegments
+        - xray:PutTelemetryRecords
+      Resource: "*"
+
+plugins:
+  - serverless-plugin-tracing
+  - serverless-offline #serverless-offline needs to be last in the list
+
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - http:
+          method: GET
+          path: hello
+          private: true
+
+  fail:
+    handler: handler.fail
+    events:
+      - http:
+          method: GET
+          path: fail
+          private: true
